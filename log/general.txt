@@ -1,0 +1,16 @@
+[03/01/2021 22:11:25] add_product_to_cart - INFO : User Alessandro requested add_product_to_cart api
+[03/01/2021 22:11:25] query - INFO : No connection, trying to connect to defaultdb on the host localhost
+[03/01/2021 22:11:25] connectTo - INFO : Connection to the database 'Cinema' on the host localhost estabilished
+[03/01/2021 22:11:25] query - INFO : Query SELECT Cart_ID from cart WHERE Customer_ID = 'Alessandro' AND status = 'PENDING' executed successfully
+[03/01/2021 22:11:25] query - INFO : Query SELECT Item_ID FROM cart_item WHERE Cart_ID=16 AND Product_ID=1 executed successfully
+[03/01/2021 22:11:25] query - INFO : Query UPDATE cart_item SET qty=qty+1 WHERE Item_ID=1 executed successfully
+[03/01/2021 22:11:37] add_product_to_cart - INFO : User Alessandro requested add_product_to_cart api
+[03/01/2021 22:11:37] query - INFO : Query SELECT Cart_ID from cart WHERE Customer_ID = 'Alessandro' AND status = 'PENDING' executed successfully
+[03/01/2021 22:11:37] query - INFO : Query SELECT Item_ID FROM cart_item WHERE Cart_ID=16 AND Product_ID=1 executed successfully
+[03/01/2021 22:11:37] query - INFO : Query UPDATE cart_item SET qty=qty+1 WHERE Item_ID=1 executed successfully
+[03/01/2021 22:11:52] add_product_to_cart - INFO : User Nicholas requested add_product_to_cart api
+[03/01/2021 22:11:52] query - INFO : No connection, trying to connect to defaultdb on the host localhost
+[03/01/2021 22:11:52] connectTo - INFO : Connection to the database 'Cinema' on the host localhost estabilished
+[03/01/2021 22:11:52] query - INFO : Query SELECT Cart_ID from cart WHERE Customer_ID = 'Nicholas' AND status = 'PENDING' executed successfully
+[03/01/2021 22:11:52] query - INFO : Query SELECT Item_ID FROM cart_item WHERE Cart_ID=15 AND Product_ID=1 executed successfully
+[03/01/2021 22:11:52] query - INFO : Query INSERT INTO cart_item (Product_ID,Cart_ID) VALUES (1,15) executed successfully
