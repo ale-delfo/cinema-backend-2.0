@@ -1,3 +1,3 @@
 __pycache__
-/config/*
-/log/*
+/config/*.ini
+/log/*.txt
