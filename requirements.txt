@@ -1,0 +1,5 @@
+./modules/dbconnector-0.0.3-py3-none-any.whl
+firebase-admin==4.5.0
+Flask==1.1.2
+Flask-HTTPAuth==4.2.0
+gunicorn==20.0.4
