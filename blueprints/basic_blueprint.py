@@ -45,7 +45,7 @@ def add_product_to_cart():
         cartid = db.query(f'SELECT Cart_ID from cart WHERE Customer_ID = \'{uid}\' AND status = \'PENDING\'')
         # If not, create one and retrieve the ID
         if len(cartid) == 0:
-            db.query(f'INSERT INTO cart (Customer_ID,totalDue,status) VALUES (\'{uid}\',0.0,\'PENDING\')')
+            db.query(f'INSERT INTO cart (Customer_ID,status) VALUES (\'{uid}\',\'PENDING\')')
             uid = authorization.current_user()
             cartid = db.query(f'SELECT Cart_ID from cart WHERE Customer_ID = \'{uid}\' AND status = \'PENDING\'')
         # Get numeric id from the query
