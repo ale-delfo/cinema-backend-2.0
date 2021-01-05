@@ -159,6 +159,32 @@ def get_cart():
         logging.error(e)
     return jsonify(response), 200
 
+
+@bp.route('/api/cart/getitemqty', methods=['POST'])
+@authorization.login_required
+def get_item_qty():
+    uid = authorization.current_user()
+    product_id = request.form.get('productId')
+    logging.info(f'User {uid} requested /api/cart/getitemqty')
+    db = DatabaseConnector(user, passw, host, defaultdb)
+    response = dict()
+    try:
+        # Check if there's a pending cart for the user
+        cartid = db.query(f'SELECT Cart_ID from cart WHERE Customer_ID = \'{uid}\' AND status = \'PENDING\'')
+        # If there is one, remove the requested item
+        if len(cartid) != 0:
+            cartid = cartid[0][0]
+            logging.debug(f'Cart ID found: {cartid}')
+            query = db.query(f'SELECT qty FROM cart_item WHERE Cart_ID = {cartid} AND Product_ID={product_id}')
+            if len(query) != 0 :
+                response['qty'] = query.pop()[0]
+        response['status'] = 'success'
+    except Exception as e:
+        # Log the exception and not raise it in order to provide a response to the client
+        logging.error(e)
+        response['status'] = 'fail'
+    return jsonify(response), 200
+
 # ------------------------------------------------------------------
 # Defining routes associated to the blueprint  -  Product Section
 # ------------------------------------------------------------------
