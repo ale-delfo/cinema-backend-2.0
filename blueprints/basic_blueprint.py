@@ -168,6 +168,7 @@ def get_item_qty():
     logging.info(f'User {uid} requested /api/cart/getitemqty')
     db = DatabaseConnector(user, passw, host, defaultdb)
     response = dict()
+    response['qty'] = 0
     try:
         # Check if there's a pending cart for the user
         cartid = db.query(f'SELECT Cart_ID from cart WHERE Customer_ID = \'{uid}\' AND status = \'PENDING\'')
