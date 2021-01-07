@@ -243,3 +243,58 @@ def get_all_drinks():
         logging.error(e)
         #response['status'] = 'fail'
     return jsonify(response), 200
+
+
+# ------------------------------------------------------------------
+# Defining routes associated to the blueprint  -  Ticket Section
+# ------------------------------------------------------------------
+
+@bp.route('/api/ticket/buyticket', methods=['POST'])
+@authorization.login_required
+def buy_ticket():
+    uid = authorization.current_user()
+    showid = request.form.get('show_id')
+    logging.info(f'User {uid} requested ticket/buyticket api')
+    db = DatabaseConnector(user, passw, host, defaultdb)
+    response = dict()
+    response['show_id'] = showid
+    try:
+        seatsAvailable = db.query(f'SELECT seatsAvailable FROM film_show WHERE Show_ID={showid}')
+        if len(seatsAvailable) != 0:
+            seatsAvailable = (seatsAvailable.pop())[0]
+            logging.debug(f'Available seats: {seatsAvailable}')
+            if seatsAvailable > 1:
+                db.query(f'INSERT INTO ticket (Show_ID,Customer_ID,seat) VALUES ({showid},\'{uid}\',\'A00\')')
+                db.query(f'UPDATE film_show SET seatsAvailable=seatsAvailable-1 WHERE Show_ID={showid}')
+                response['status'] = 'success'
+            else:
+                response['status'] = 'fail'
+    except Exception as e:
+        # Log the exception and not raise it in order to provide a response to the client
+        logging.error(e)
+        response['status'] = 'fail'
+    return jsonify(response), 200
+
+
+@bp.route('/api/ticket/gettickets', methods=['GET'])
+@authorization.login_required
+def get_tickets():
+    uid = authorization.current_user()
+    logging.info(f'User {uid} requested ticket/gettickets api')
+    db = DatabaseConnector(user, passw, host, defaultdb)
+    response = []
+    try:
+        for ticket in db.query(f'SELECT Ticket_ID, showTime, Film_ID, seat, showRoom '
+                               f'FROM ticket JOIN film_show ON ticket.Show_ID = film_show.Show_ID '
+                               f'WHERE ticket.Customer_ID = \'{uid}\''):
+            ticket_dict = dict()
+            ticket_dict['Ticket_ID'] = ticket[0]
+            ticket_dict['showTime'] = ticket[1]
+            ticket_dict['Film_ID'] = ticket[2]
+            ticket_dict['seat'] = ticket[3]
+            ticket_dict['room'] = ticket[4]
+            response.append(ticket_dict)
+    except Exception as e:
+        # Log the exception and not raise it in order to provide a response to the client
+        logging.error(e)
+    return jsonify(response), 200
