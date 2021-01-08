@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from utils.authorizaton import authorization
 from dbconnector import DatabaseConnector
 import logging
+from datetime import datetime
 import configparser
 
 bp = Blueprint('Basic Blueprint', __name__)
@@ -269,6 +270,8 @@ def buy_ticket():
                 response['status'] = 'success'
             else:
                 response['status'] = 'fail'
+        else:
+            response['status'] = 'fail'
     except Exception as e:
         # Log the exception and not raise it in order to provide a response to the client
         logging.error(e)
@@ -296,5 +299,52 @@ def get_tickets():
             response.append(ticket_dict)
     except Exception as e:
         # Log the exception and not raise it in order to provide a response to the client
+        logging.error(e)
+    return jsonify(response), 200
+
+# ------------------------------------------------------------------
+# Defining routes associated to the blueprint  -  Order Section
+# ------------------------------------------------------------------
+
+
+@bp.route('/api/order/placeorder', methods=['POST'])
+@authorization.login_required
+def place_order():
+    uid = authorization.current_user()
+    ticket_id = request.form.get('ticket_id')
+    logging.info(f'User {uid} requested the order/placeorder api')
+    db = DatabaseConnector(user, passw, host, defaultdb)
+    response = dict()
+    response['ticket_id'] = ticket_id
+    try:
+        # Look for the pending cart
+        cartid = db.query(f'SELECT Cart_ID from cart WHERE Customer_ID = \'{uid}\' AND status = \'PENDING\'')
+        cartid = cartid[0][0]
+        # Fetch all the product in the cart and calculate the total price
+        items = db.query(f'SELECT product.price, cart_item.qty '
+                         f'FROM cart_item '
+                         f'JOIN product ON cart_item.Product_ID = product.Product_ID '
+                         f'WHERE cart_item.Cart_ID = {cartid}')
+        totalprice = 0.0
+        for item in items:
+            print(item)
+            totalprice += item[0]*item[1]
+        # Get current timestamp
+        timeplaced = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        # WHEN?
+        timeplanned = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        # Finally insert entry in order and close the cart
+        db.query(f'INSERT INTO '
+                 f'cart_order (Cart_ID, Ticket_ID, timePlaced, totalDue, timePlanned) '
+                 f'VALUES ({cartid}, {ticket_id}, \'{timeplaced}\', {totalprice}, \'{timeplaced}\')')
+
+        db.query(f'UPDATE cart '
+                 f'SET status = \'CLOSED\' '
+                 f'WHERE cart_id={cartid}')
+        response['status'] = 'success'
+    except Exception as e:
+        # Log the exception and not raise it in order to provide a response to the client
+        response['status'] = 'fail'
         logging.error(e)
     return jsonify(response), 200
