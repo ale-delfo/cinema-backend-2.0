@@ -1,8 +1,8 @@
 from flask import Blueprint, request, jsonify
 from utils.authorizaton import authorization
 from dbconnector import DatabaseConnector
-import logging
 from datetime import datetime
+import logging
 import configparser
 
 bp = Blueprint('Basic Blueprint', __name__)
@@ -26,6 +26,8 @@ if environment not in ['local', 'production']:
 # Utilities configuration
 # ------------------------------------------------------------------
 
+# Get main app logger
+logger = logging.getLogger('apilogger')
 
 # ------------------------------------------------------------------
 # Defining routes associated to the blueprint  -  Cart Section
@@ -37,7 +39,7 @@ if environment not in ['local', 'production']:
 def add_product_to_cart():
     uid = authorization.current_user()
     db = DatabaseConnector(user, passw, host, defaultdb)
-    logging.info(f'User {uid} requested cart/add_product_to_cart api')
+    logger.info(f'User {uid} requested cart/add_product_to_cart api')
     productid = request.form.get('productId')
     response = dict()
     response['productId'] = productid
@@ -62,7 +64,7 @@ def add_product_to_cart():
         response['status'] = 'success'
     except Exception as e:
         # Log the exception and not raise it in order to provide a response to the client
-        logging.error(e)
+        logger.error(e)
         response['status'] = 'fail'
     return response, 200
 
@@ -70,7 +72,7 @@ def add_product_to_cart():
 @authorization.login_required
 def remove_product_from_cart():
     uid = authorization.current_user()
-    logging.info(f'User {uid} requested cart/remove_product_from_cart api')
+    logger.info(f'User {uid} requested cart/remove_product_from_cart api')
     productid = request.form.get('productId')
     db = DatabaseConnector(user, passw, host, defaultdb)
     response = dict()
@@ -81,7 +83,7 @@ def remove_product_from_cart():
         # If there is one, remove the requested item
         if len(cartid) != 0:
             cartid = cartid[0][0]
-            logging.debug(f'Cart ID found: {cartid}')
+            logger.debug(f'Cart ID found: {cartid}')
             item = db.query(f'SELECT Item_ID, qty FROM cart_item WHERE Cart_ID={cartid} AND Product_ID={productid}')
             if len(item) != 0:
                 item = item.pop(0)
@@ -95,7 +97,7 @@ def remove_product_from_cart():
         response['status'] = 'success'
     except Exception as e:
         # Log the exception and not raise it in order to provide a response to the client
-        logging.error(e)
+        logger.error(e)
         response['status'] = 'fail'
     return response, 200
 
@@ -104,7 +106,7 @@ def remove_product_from_cart():
 @authorization.login_required
 def empty_cart():
     uid = authorization.current_user()
-    logging.info(f'User {uid} requested cart/empty_cart api')
+    logger.info(f'User {uid} requested cart/empty_cart api')
     db = DatabaseConnector(user, passw, host, defaultdb)
     response = dict()
     try:
@@ -113,12 +115,12 @@ def empty_cart():
         # If there is one, remove the requested item
         if len(cartid) != 0:
             cartid = cartid[0][0]
-            logging.debug(f'Cart ID found: {cartid}')
+            logger.debug(f'Cart ID found: {cartid}')
             db.query(f'DELETE FROM cart_item WHERE Cart_ID={cartid}')
         response['status'] = 'success'
     except Exception as e:
         # Log the exception and not raise it in order to provide a response to the client
-        logging.error(e)
+        logger.error(e)
         response['status'] = 'fail'
     return response, 200
 
@@ -127,7 +129,7 @@ def empty_cart():
 @authorization.login_required
 def get_cart():
     uid = authorization.current_user()
-    logging.info(f'User {uid} requested cart/get_cart api')
+    logger.info(f'User {uid} requested cart/get_cart api')
     db = DatabaseConnector(user, passw, host, defaultdb)
     response = []
     try:
@@ -136,7 +138,7 @@ def get_cart():
         # If there is one, remove the requested item
         if len(cartid) != 0:
             cartid = cartid[0][0]
-            logging.debug(f'Cart ID found: {cartid}')
+            logger.debug(f'Cart ID found: {cartid}')
             query = db.query(f'SELECT product.*, qty '
                              f'FROM '
                              f'(SELECT Product_ID,qty FROM cart_item WHERE Cart_ID = {cartid}) T '
@@ -157,7 +159,7 @@ def get_cart():
                 response.append(food_dict)
     except Exception as e:
         # Log the exception and not raise it in order to provide a response to the client
-        logging.error(e)
+        logger.error(e)
     return jsonify(response), 200
 
 
@@ -166,7 +168,7 @@ def get_cart():
 def get_item_qty():
     uid = authorization.current_user()
     product_id = request.form.get('productId')
-    logging.info(f'User {uid} requested /api/cart/getitemqty')
+    logger.info(f'User {uid} requested /api/cart/getitemqty')
     db = DatabaseConnector(user, passw, host, defaultdb)
     response = dict()
     response['qty'] = 0
@@ -176,14 +178,14 @@ def get_item_qty():
         # If there is one, remove the requested item
         if len(cartid) != 0:
             cartid = cartid[0][0]
-            logging.debug(f'Cart ID found: {cartid}')
+            logger.debug(f'Cart ID found: {cartid}')
             query = db.query(f'SELECT qty FROM cart_item WHERE Cart_ID = {cartid} AND Product_ID={product_id}')
             if len(query) != 0 :
                 response['qty'] = query.pop()[0]
         response['status'] = 'success'
     except Exception as e:
         # Log the exception and not raise it in order to provide a response to the client
-        logging.error(e)
+        logger.error(e)
         response['status'] = 'fail'
     return jsonify(response), 200
 
@@ -196,7 +198,7 @@ def get_item_qty():
 @authorization.login_required
 def get_all_food():
     uid = authorization.current_user()
-    logging.info(f'User {uid} requested product/getall api')
+    logger.info(f'User {uid} requested product/getall api')
     db = DatabaseConnector(user, passw, host, defaultdb)
     response = []
     try:
@@ -212,9 +214,10 @@ def get_all_food():
             food_dict['size'] = food[7]
             food_dict['cat'] = food[8]
             response.append(food_dict)
+        logger.info('Request served successfully')
     except Exception as e:
         # Log the exception and not raise it in order to provide a response to the client
-        logging.error(e)
+        logger.error(e)
         #response['status'] = 'fail'
     return jsonify(response), 200
 
@@ -223,7 +226,7 @@ def get_all_food():
 @authorization.login_required
 def get_all_drinks():
     uid = authorization.current_user()
-    logging.info(f'User {uid} requested product/getall api')
+    logger.info(f'User {uid} requested product/getall api')
     db = DatabaseConnector(user, passw, host, defaultdb)
     response = []
     try:
@@ -239,9 +242,10 @@ def get_all_drinks():
             food_dict['size'] = food[7]
             food_dict['cat'] = food[8]
             response.append(food_dict)
+        logger.info('Request served successfully')
     except Exception as e:
         # Log the exception and not raise it in order to provide a response to the client
-        logging.error(e)
+        logger.error(e)
         #response['status'] = 'fail'
     return jsonify(response), 200
 
@@ -255,7 +259,7 @@ def get_all_drinks():
 def buy_ticket():
     uid = authorization.current_user()
     showid = request.form.get('show_id')
-    logging.info(f'User {uid} requested ticket/buyticket api')
+    logger.info(f'User {uid} requested ticket/buyticket api')
     db = DatabaseConnector(user, passw, host, defaultdb)
     response = dict()
     response['show_id'] = showid
@@ -263,7 +267,7 @@ def buy_ticket():
         seatsAvailable = db.query(f'SELECT seatsAvailable FROM film_show WHERE Show_ID={showid}')
         if len(seatsAvailable) != 0:
             seatsAvailable = (seatsAvailable.pop())[0]
-            logging.debug(f'Available seats: {seatsAvailable}')
+            logger.debug(f'Available seats: {seatsAvailable}')
             if seatsAvailable > 1:
                 db.query(f'INSERT INTO ticket (Show_ID,Customer_ID,seat) VALUES ({showid},\'{uid}\',\'A00\')')
                 db.query(f'UPDATE film_show SET seatsAvailable=seatsAvailable-1 WHERE Show_ID={showid}')
@@ -272,9 +276,10 @@ def buy_ticket():
                 response['status'] = 'fail'
         else:
             response['status'] = 'fail'
+        logger.info('Request served successfully')
     except Exception as e:
         # Log the exception and not raise it in order to provide a response to the client
-        logging.error(e)
+        logger.error(e)
         response['status'] = 'fail'
     return jsonify(response), 200
 
@@ -283,7 +288,7 @@ def buy_ticket():
 @authorization.login_required
 def get_tickets():
     uid = authorization.current_user()
-    logging.info(f'User {uid} requested ticket/gettickets api')
+    logger.info(f'User {uid} requested ticket/gettickets api')
     db = DatabaseConnector(user, passw, host, defaultdb)
     response = []
     try:
@@ -297,9 +302,10 @@ def get_tickets():
             ticket_dict['seat'] = ticket[3]
             ticket_dict['room'] = ticket[4]
             response.append(ticket_dict)
+        logger.info('Request served successfully')
     except Exception as e:
         # Log the exception and not raise it in order to provide a response to the client
-        logging.error(e)
+        logger.error(e)
     return jsonify(response), 200
 
 # ------------------------------------------------------------------
@@ -312,7 +318,7 @@ def get_tickets():
 def place_order():
     uid = authorization.current_user()
     ticket_id = request.form.get('ticket_id')
-    logging.info(f'User {uid} requested the order/placeorder api')
+    logger.info(f'User {uid} requested the order/placeorder api')
     db = DatabaseConnector(user, passw, host, defaultdb)
     response = dict()
     response['ticket_id'] = ticket_id
@@ -343,8 +349,9 @@ def place_order():
                  f'SET status = \'CLOSED\' '
                  f'WHERE cart_id={cartid}')
         response['status'] = 'success'
+        logger.info('Request served successfully')
     except Exception as e:
         # Log the exception and not raise it in order to provide a response to the client
         response['status'] = 'fail'
-        logging.error(e)
+        logger.error(e)
     return jsonify(response), 200
