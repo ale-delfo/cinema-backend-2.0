@@ -101,6 +101,33 @@ def remove_product_from_cart():
         response['status'] = 'fail'
     return response, 200
 
+@bp.route('/api/cart/removeallproduct', methods=['POST'])
+@authorization.login_required
+def remove_all_product_from_cart():
+    uid = authorization.current_user()
+    logger.info(f'User {uid} requested cart/removeallproduct api')
+    productid = request.form.get('productId')
+    db = DatabaseConnector(user, passw, host, defaultdb)
+    response = dict()
+    response['productId'] = productid
+    try:
+        # Check if there's a pending cart for the user
+        cartid = db.query(f'SELECT Cart_ID from cart WHERE Customer_ID = \'{uid}\' AND status = \'PENDING\'')
+        # If there is one, remove the requested item
+        if len(cartid) != 0:
+            cartid = cartid[0][0]
+            logger.debug(f'Cart ID found: {cartid}')
+            item = db.query(f'SELECT Item_ID, qty FROM cart_item WHERE Cart_ID={cartid} AND Product_ID={productid}')
+            if len(item) != 0:
+                item = item.pop(0)
+                db.query(f'DELETE FROM cart_item WHERE Item_ID={item[0]}')
+        response['status'] = 'success'
+    except Exception as e:
+        # Log the exception and not raise it in order to provide a response to the client
+        logger.error(e)
+        response['status'] = 'fail'
+    return response, 200
+
 
 @bp.route('/api/cart/emptycart', methods=['GET'])
 @authorization.login_required
