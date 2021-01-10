@@ -62,6 +62,7 @@ def add_product_to_cart():
             item_id = item_id[0][0]
             db.query(f'UPDATE cart_item SET qty=qty+1 WHERE Item_ID={item_id}')
         response['status'] = 'success'
+        logger.info('Request served successfully')
     except Exception as e:
         # Log the exception and not raise it in order to provide a response to the client
         logger.error(e)
@@ -95,6 +96,7 @@ def remove_product_from_cart():
                 else:
                     raise BaseException("Error in quantity!")
         response['status'] = 'success'
+        logger.info('Request served successfully')
     except Exception as e:
         # Log the exception and not raise it in order to provide a response to the client
         logger.error(e)
@@ -122,6 +124,7 @@ def remove_all_product_from_cart():
                 item = item.pop(0)
                 db.query(f'DELETE FROM cart_item WHERE Item_ID={item[0]}')
         response['status'] = 'success'
+        logger.info('Request served successfully')
     except Exception as e:
         # Log the exception and not raise it in order to provide a response to the client
         logger.error(e)
@@ -145,6 +148,7 @@ def empty_cart():
             logger.debug(f'Cart ID found: {cartid}')
             db.query(f'DELETE FROM cart_item WHERE Cart_ID={cartid}')
         response['status'] = 'success'
+        logger.info('Request served successfully')
     except Exception as e:
         # Log the exception and not raise it in order to provide a response to the client
         logger.error(e)
@@ -184,6 +188,7 @@ def get_cart():
                 food_dict['cat'] = food[8]
                 food_dict['qty'] = food[9]
                 response.append(food_dict)
+        logger.info('Request served successfully')
     except Exception as e:
         # Log the exception and not raise it in order to provide a response to the client
         logger.error(e)
@@ -210,6 +215,7 @@ def get_item_qty():
             if len(query) != 0 :
                 response['qty'] = query.pop()[0]
         response['status'] = 'success'
+        logger.info('Request served successfully')
     except Exception as e:
         # Log the exception and not raise it in order to provide a response to the client
         logger.error(e)
