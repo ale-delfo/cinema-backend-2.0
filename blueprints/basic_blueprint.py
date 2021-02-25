@@ -388,3 +388,11 @@ def place_order():
         response['status'] = 'fail'
         logger.error(e)
     return jsonify(response), 200
+
+# ------------------------------------------------------------------
+# Defining routes associated to the blueprint  -  Scheduling Section
+# ------------------------------------------------------------------
+
+@bp.route('/api/scheduling/schedule', methods=['GET'])
+def schedule_delivery():
+    return 'schedule', 200
