@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from utils.authorizaton import authorization
 from dbconnector import DatabaseConnector
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import configparser
 
@@ -366,17 +366,18 @@ def place_order():
                          f'WHERE cart_item.Cart_ID = {cartid}')
         totalprice = 0.0
         for item in items:
-            print(item)
+            #print(item)
             totalprice += item[0]*item[1]
         # Get current timestamp
         timeplaced = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         # WHEN?
-        timeplanned = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
+        show_start_time = db.query(f'SELECT showTime FROM ticket join film_show ON ticket.Show_ID = film_show.Show_ID')
+        show_start_time = show_start_time[0][0]
+        timeplanned = show_start_time + timedelta(hours=1)
         # Finally insert entry in order and close the cart
         db.query(f'INSERT INTO '
                  f'cart_order (Cart_ID, Ticket_ID, timePlaced, totalDue, timePlanned) '
-                 f'VALUES ({cartid}, {ticket_id}, \'{timeplaced}\', {totalprice}, \'{timeplaced}\')')
+                 f'VALUES ({cartid}, {ticket_id}, \'{timeplaced}\', {totalprice}, \'{timeplanned}\')')
 
         db.query(f'UPDATE cart '
                  f'SET status = \'CLOSED\' '
