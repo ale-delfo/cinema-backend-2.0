@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from utils.authorizaton import authorization
 from dbconnector import DatabaseConnector
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 import configparser
 
@@ -371,7 +371,7 @@ def place_order():
         # Get current timestamp
         timeplaced = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         # WHEN?
-        show_start_time = db.query(f'SELECT showTime FROM ticket join film_show ON ticket.Show_ID = film_show.Show_ID')
+        show_start_time = db.query(f'SELECT showTime FROM ticket join film_show ON ticket.Show_ID = film_show.Show_ID WHERE Ticket_ID={ticket_id}')
         show_start_time = show_start_time[0][0]
         timeplanned = show_start_time + timedelta(hours=1)
         # Finally insert entry in order and close the cart
@@ -394,6 +394,23 @@ def place_order():
 # Defining routes associated to the blueprint  -  Scheduling Section
 # ------------------------------------------------------------------
 
-@bp.route('/api/scheduling/schedule', methods=['GET'])
+@bp.route('/api/scheduling/schedule', methods=['POST'])
 def schedule_delivery():
-    return 'schedule', 200
+    nrooms = 10
+    starting_time = request.form.get('starting_time')
+    starting_time = datetime.strptime(starting_time, "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc)
+    boundary = starting_time + timedelta(minutes=45)
+    db = DatabaseConnector(user, passw, host, defaultdb)
+    # orders = db.query(f'SELECT showRoom FROM cart_order JOIN ticket ON cart_order.Ticket_ID = ticket.Ticket_ID'
+    #                   f'WHERE timePlanned >= "{starting_time.strftime("%Y-%m-%d %H:%M:%S")}"'
+    #                   f'AND timePlanned <= "{boundary.strftime("%Y-%m-%d %H:%M:%S")}"')
+    orders = db.query(f'SELECT showRoom from (cart_order JOIN ticket on cart_order.Ticket_ID = ticket.Ticket_ID) '
+                      f'JOIN film_show ON ticket.Show_ID = film_show.Show_ID '
+                      f'WHERE timePlanned >= "{starting_time.strftime("%Y-%m-%d %H:%M:%S")}" '
+                      f'AND timePlanned <= "{boundary.strftime("%Y-%m-%d %H:%M:%S")}"')
+    orders = [order[0] for order in orders]
+    orders_vector = []
+    for i in range(0, nrooms):
+        orders_vector.append(orders.count(i+1))
+    print(orders_vector)
+    return jsonify(starting_time), 200
