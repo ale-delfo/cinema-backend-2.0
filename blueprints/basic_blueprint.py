@@ -29,6 +29,7 @@ if environment not in ['local', 'production']:
 # Get main app logger
 logger = logging.getLogger('apilogger')
 
+
 # ------------------------------------------------------------------
 # Defining routes associated to the blueprint  -  Cart Section
 # ------------------------------------------------------------------
@@ -69,6 +70,7 @@ def add_product_to_cart():
         response['status'] = 'fail'
     return response, 200
 
+
 @bp.route('/api/cart/removeproduct', methods=['POST'])
 @authorization.login_required
 def remove_product_from_cart():
@@ -102,6 +104,7 @@ def remove_product_from_cart():
         logger.error(e)
         response['status'] = 'fail'
     return response, 200
+
 
 @bp.route('/api/cart/removeallproduct', methods=['POST'])
 @authorization.login_required
@@ -212,7 +215,7 @@ def get_item_qty():
             cartid = cartid[0][0]
             logger.debug(f'Cart ID found: {cartid}')
             query = db.query(f'SELECT qty FROM cart_item WHERE Cart_ID = {cartid} AND Product_ID={product_id}')
-            if len(query) != 0 :
+            if len(query) != 0:
                 response['qty'] = query.pop()[0]
         response['status'] = 'success'
         logger.info('Request served successfully')
@@ -221,6 +224,7 @@ def get_item_qty():
         logger.error(e)
         response['status'] = 'fail'
     return jsonify(response), 200
+
 
 # ------------------------------------------------------------------
 # Defining routes associated to the blueprint  -  Product Section
@@ -251,7 +255,7 @@ def get_all_food():
     except Exception as e:
         # Log the exception and not raise it in order to provide a response to the client
         logger.error(e)
-        #response['status'] = 'fail'
+        # response['status'] = 'fail'
     return jsonify(response), 200
 
 
@@ -279,7 +283,7 @@ def get_all_drinks():
     except Exception as e:
         # Log the exception and not raise it in order to provide a response to the client
         logger.error(e)
-        #response['status'] = 'fail'
+        # response['status'] = 'fail'
     return jsonify(response), 200
 
 
@@ -341,6 +345,7 @@ def get_tickets():
         logger.error(e)
     return jsonify(response), 200
 
+
 # ------------------------------------------------------------------
 # Defining routes associated to the blueprint  -  Order Section
 # ------------------------------------------------------------------
@@ -366,12 +371,13 @@ def place_order():
                          f'WHERE cart_item.Cart_ID = {cartid}')
         totalprice = 0.0
         for item in items:
-            #print(item)
-            totalprice += item[0]*item[1]
+            # print(item)
+            totalprice += item[0] * item[1]
         # Get current timestamp
         timeplaced = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         # WHEN?
-        show_start_time = db.query(f'SELECT showTime FROM ticket join film_show ON ticket.Show_ID = film_show.Show_ID WHERE Ticket_ID={ticket_id}')
+        show_start_time = db.query(
+            f'SELECT showTime FROM ticket join film_show ON ticket.Show_ID = film_show.Show_ID WHERE Ticket_ID={ticket_id}')
         show_start_time = show_start_time[0][0]
         timeplanned = show_start_time + timedelta(hours=1)
         # Finally insert entry in order and close the cart
@@ -390,20 +396,26 @@ def place_order():
         logger.error(e)
     return jsonify(response), 200
 
+
 # ------------------------------------------------------------------
 # Defining routes associated to the blueprint  -  Scheduling Section
 # ------------------------------------------------------------------
 
+class Operatore:
+    def __init__(self, nome):
+        self.nome = nome
+        self.capacita = 3
+        self.last_delivery = None
+
+
 @bp.route('/api/scheduling/schedule', methods=['POST'])
 def schedule_delivery():
+    queue_operatori = [Operatore('Alessandro'), Operatore('Nicholas'), Operatore('Luca')]
     nrooms = 10
     starting_time = request.form.get('starting_time')
     starting_time = datetime.strptime(starting_time, "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc)
     boundary = starting_time + timedelta(minutes=45)
     db = DatabaseConnector(user, passw, host, defaultdb)
-    # orders = db.query(f'SELECT showRoom FROM cart_order JOIN ticket ON cart_order.Ticket_ID = ticket.Ticket_ID'
-    #                   f'WHERE timePlanned >= "{starting_time.strftime("%Y-%m-%d %H:%M:%S")}"'
-    #                   f'AND timePlanned <= "{boundary.strftime("%Y-%m-%d %H:%M:%S")}"')
     orders = db.query(f'SELECT showRoom from (cart_order JOIN ticket on cart_order.Ticket_ID = ticket.Ticket_ID) '
                       f'JOIN film_show ON ticket.Show_ID = film_show.Show_ID '
                       f'WHERE timePlanned >= "{starting_time.strftime("%Y-%m-%d %H:%M:%S")}" '
@@ -411,6 +423,26 @@ def schedule_delivery():
     orders = [order[0] for order in orders]
     orders_vector = []
     for i in range(0, nrooms):
-        orders_vector.append(orders.count(i+1))
-    print(orders_vector)
-    return jsonify(starting_time), 200
+        orders_vector.append(orders.count(i + 1))
+    totOrd = sum(orders_vector)
+    curr_operatore = queue_operatori.pop()
+    curr_sala = 0
+    ord_curr_sala = orders[curr_sala]
+    schedule = []
+    while totOrd > 0:
+        while curr_operatore.capacita > 0 and ord_curr_sala > 0:
+            schedule.append(f'{curr_operatore.nome} consegna in sala {curr_sala+1}')
+            curr_operatore.capacita -= 1
+            ord_curr_sala -= 1
+            totOrd -= 1
+        if curr_operatore.capacita == 0:
+            schedule.append(f'{curr_operatore.nome} torna alla base')
+            curr_operatore.capacita = 3
+            queue_operatori.insert(0, curr_operatore)
+            curr_operatore = queue_operatori.pop()
+        if ord_curr_sala == 0:
+            schedule.append(f'La sala {curr_sala+1} è stata interamente servita')
+            curr_sala += 1
+            if curr_sala != len(orders):
+                ord_curr_sala = orders[curr_sala]
+    return jsonify(schedule), 200
