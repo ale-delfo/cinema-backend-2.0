@@ -427,7 +427,7 @@ def schedule_delivery():
     totOrd = sum(orders_vector)
     curr_operatore = queue_operatori.pop()
     curr_sala = 0
-    ord_curr_sala = orders[curr_sala]
+    ord_curr_sala = orders_vector[curr_sala]
     schedule = []
     while totOrd > 0:
         while curr_operatore.capacita > 0 and ord_curr_sala > 0:
@@ -443,6 +443,6 @@ def schedule_delivery():
         if ord_curr_sala == 0:
             schedule.append(f'La sala {curr_sala+1} è stata interamente servita')
             curr_sala += 1
-            if curr_sala != len(orders):
-                ord_curr_sala = orders[curr_sala]
+            if curr_sala != len(orders_vector):
+                ord_curr_sala = orders_vector[curr_sala]
     return jsonify(schedule), 200
