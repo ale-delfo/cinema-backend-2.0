@@ -32,4 +32,16 @@ A YAML file is needed in order to give instructions to the CI Server to perform 
   Place an order for a given ticket with the active cart.
 - /api/scheduling/schedule [GET] <br>
   Get delivery scheduling
- 
+  
+## Configuration file
+```shell
+[GENERAL]
+environment= <production/local>
+[MYSQL]
+user= <username>
+password= <password>
+host= <mysql_host_address>
+defaultdb= <default db>
+```
+ The _environment_ configuration in the _GENERAL_ section is used to switch authentication mode and setting during development sessions. <br>
+ The _MYSQL_ section contains credentials and settings for the DBMS connection.
