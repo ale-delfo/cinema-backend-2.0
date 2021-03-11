@@ -26,10 +26,10 @@ A YAML file is needed in order to give instructions to the CI Server to perform 
   Get all drinks in the menu
 - /api/ticket/buyticket [POST] <br>
   Buy a ticket for a given show
-- /api/ticket/gettickets [GET]
+- /api/ticket/gettickets [GET] <br>
   Get all purchased tickets
-- /api/ticket/placeorder [POST]
+- /api/ticket/placeorder [POST] <br>
   Place an order for a given ticket with the active cart.
-- /api/scheduling/schedule
+- /api/scheduling/schedule [GET] <br>
   Get delivery scheduling
  
